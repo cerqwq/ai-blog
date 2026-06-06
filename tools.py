@@ -1,6 +1,6 @@
 """
-AI Domain Driven - AI领域驱动设计工具
-支持DDD建模、聚合设计、限界上下文
+AI Blog - AI博客工具
+支持文章生成、SEO优化、评论系统
 """
 
 import json
@@ -15,10 +15,10 @@ except ImportError:
     OPENAI_AVAILABLE = False
 
 
-class AIDomainDrivenTools:
+class AIBlogTools:
     """
-    AI领域驱动设计工具
-    支持：建模、聚合、上下文
+    AI博客工具
+    支持：文章、SEO、评论
     """
 
     def __init__(self, model: str = "mimo-v2.5-pro", api_key: str = None, base_url: str = None):
@@ -31,151 +31,82 @@ class AIDomainDrivenTools:
         else:
             self.client = None
 
-    def design_domain_model(self, domain: str, requirements: str) -> Dict:
-        """设计领域模型"""
-        if not self.client:
-            return {"error": "LLM客户端未配置"}
-
-        prompt = f"""请为{domain}设计领域模型：
-
-需求：{requirements}
-
-请返回JSON格式：
-{{
-    "entities": ["实体"],
-    "value_objects": ["值对象"],
-    "aggregates": ["聚合"],
-    "repositories": ["仓储"],
-    "domain_events": ["领域事件"]
-}}"""
-
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=500
-        )
-
-        try:
-            content = response.choices[0].message.content
-            import re
-            json_match = re.search(r'\{.*\}', content, re.DOTALL)
-            if json_match:
-                return json.loads(json_match.group())
-        except:
-            pass
-
-        return {"domain": content}
-
-    def design_aggregate(self, aggregate_name: str, entities: List[str]) -> Dict:
-        """设计聚合"""
-        if not self.client:
-            return {"error": "LLM客户端未配置"}
-
-        entities_text = ", ".join(entities)
-
-        prompt = f"""请设计{aggregate_name}聚合：
-
-实体：{entities_text}
-
-请返回JSON格式：
-{{
-    "root": "聚合根",
-    "entities": ["实体"],
-    "value_objects": ["值对象"],
-    "invariants": ["不变量"],
-    "events": ["事件"]
-}}"""
-
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=500
-        )
-
-        try:
-            content = response.choices[0].message.content
-            import re
-            json_match = re.search(r'\{.*\}', content, re.DOTALL)
-            if json_match:
-                return json.loads(json_match.group())
-        except:
-            pass
-
-        return {"aggregate": content}
-
-    def design_bounded_context(self, domain: str, subdomains: List[str]) -> Dict:
-        """设计限界上下文"""
-        if not self.client:
-            return {"error": "LLM客户端未配置"}
-
-        subdomains_text = ", ".join(subdomains)
-
-        prompt = f"""请为{domain}设计限界上下文：
-
-子域：{subdomains_text}
-
-请返回JSON格式：
-{{
-    "contexts": [
-        {{"name": "上下文名", "domain": "领域", "entities": ["实体"]}}
-    ],
-    "relationships": ["上下文映射"],
-    "integration": "集成策略"
-}}"""
-
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=500
-        )
-
-        try:
-            content = response.choices[0].message.content
-            import re
-            json_match = re.search(r'\{.*\}', content, re.DOTALL)
-            if json_match:
-                return json.loads(json_match.group())
-        except:
-            pass
-
-        return {"bounded_context": content}
-
-    def generate_domain_event(self, event_name: str, payload: Dict) -> str:
-        """生成领域事件"""
+    def generate_blog_post(self, topic: str, style: str = "professional", length: str = "1000字") -> str:
+        """生成博客文章"""
         if not self.client:
             return "LLM客户端未配置"
 
-        payload_text = json.dumps(payload, ensure_ascii=False)
+        prompt = f"""请写一篇关于"{topic}"的博客文章：
 
-        prompt = f"""请生成{event_name}领域事件：
-
-数据：{payload_text}
+风格：{style}
+字数：{length}
 
 要求：
-1. 事件类定义
-2. 序列化支持
-3. 版本控制"""
+1. 引人入胜的标题
+2. 清晰的结构
+3. SEO优化
+4. Markdown格式"""
 
         response = self.client.chat.completions.create(
             model=self.model,
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=1500
+            max_tokens=4000
         )
 
         return response.choices[0].message.content
 
-    def generate_repository(self, aggregate: str, db_type: str = "SQLAlchemy") -> str:
-        """生成仓储实现"""
+    def generate_blog_seo(self, title: str, content: str) -> Dict:
+        """生成博客SEO"""
+        if not self.client:
+            return {"error": "LLM客户端未配置"}
+
+        prompt = f"""请为博客文章生成SEO优化：
+
+标题：{title}
+内容摘要：{content[:500]}
+
+请返回JSON格式：
+{{
+    "meta_title": "SEO标题",
+    "meta_description": "元描述",
+    "keywords": ["关键词"],
+    "og_tags": "Open Graph标签",
+    "schema_markup": "结构化数据"
+}}"""
+
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=500
+        )
+
+        try:
+            content = response.choices[0].message.content
+            import re
+            json_match = re.search(r'\{.*\}', content, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group())
+        except:
+            pass
+
+        return {"seo": content}
+
+    def generate_blog_list(self, categories: List[str], style: str = "modern") -> str:
+        """生成博客列表"""
         if not self.client:
             return "LLM客户端未配置"
 
-        prompt = f"""请生成{aggregate}的{db_type}仓储实现：
+        categories_text = ", ".join(categories)
+
+        prompt = f"""请生成{style}风格的博客列表页面：
+
+分类：{categories_text}
 
 要求：
-1. CRUD操作
-2. 查询支持
-3. 事务管理
-4. 错误处理"""
+1. 文章卡片
+2. 分类筛选
+3. 分页
+4. 搜索"""
 
         response = self.client.chat.completions.create(
             model=self.model,
@@ -185,22 +116,44 @@ class AIDomainDrivenTools:
 
         return response.choices[0].message.content
 
-    def analyze_domain_complexity(self, domain_description: str) -> Dict:
-        """分析领域复杂度"""
+    def generate_comment_system(self, features: List[str]) -> str:
+        """生成评论系统"""
+        if not self.client:
+            return "LLM客户端未配置"
+
+        features_text = ", ".join(features)
+
+        prompt = f"""请生成评论系统：
+
+功能：{features_text}
+
+要求：
+1. 嵌套评论
+2. 点赞
+3. 举报
+4. 审核"""
+
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=2000
+        )
+
+        return response.choices[0].message.content
+
+    def generate_newsletter(self, topic: str, frequency: str) -> Dict:
+        """生成新闻通讯"""
         if not self.client:
             return {"error": "LLM客户端未配置"}
 
-        prompt = f"""请分析领域复杂度：
-
-{domain_description[:1000]}
+        prompt = f"""请生成{frequency}的{topic}新闻通讯：
 
 请返回JSON格式：
 {{
-    "complexity": "high/medium/low",
-    "core_domain": "核心域",
-    "supporting_domains": ["支撑域"],
-    "generic_domains": ["通用域"],
-    "recommendations": ["建议"]
+    "subject_lines": ["标题"],
+    "content_sections": ["内容区块"],
+    "design": "设计建议",
+    "send_time": "发送时间"
 }}"""
 
         response = self.client.chat.completions.create(
@@ -218,20 +171,56 @@ class AIDomainDrivenTools:
         except:
             pass
 
-        return {"analysis": content}
+        return {"newsletter": content}
+
+    def generate_blog_analytics(self, metrics: Dict) -> Dict:
+        """生成博客分析"""
+        if not self.client:
+            return {"error": "LLM客户端未配置"}
+
+        metrics_text = json.dumps(metrics, ensure_ascii=False)
+
+        prompt = f"""请分析博客数据：
+
+{metrics_text}
+
+请返回JSON格式：
+{{
+    "summary": "总结",
+    "top_posts": ["热门文章"],
+    "trends": ["趋势"],
+    "improvements": ["改进建议"]
+}}"""
+
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=300
+        )
+
+        try:
+            content = response.choices[0].message.content
+            import re
+            json_match = re.search(r'\{.*\}', content, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group())
+        except:
+            pass
+
+        return {"analytics": content}
 
 
-def create_tools(**kwargs) -> AIDomainDrivenTools:
-    """创建DDD工具"""
-    return AIDomainDrivenTools(**kwargs)
+def create_tools(**kwargs) -> AIBlogTools:
+    """创建博客工具"""
+    return AIBlogTools(**kwargs)
 
 
 if __name__ == "__main__":
     tools = create_tools()
 
-    print("AI Domain Driven Tools")
+    print("AI Blog Tools")
     print()
 
     # 测试
-    domain = tools.design_domain_model("电商", "用户、商品、订单、支付")
-    print(json.dumps(domain, ensure_ascii=False, indent=2))
+    post = tools.generate_blog_post("Python异步编程", "技术", "1500字")
+    print(post[:300] + "...")
